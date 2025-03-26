@@ -361,7 +361,6 @@ const ProcessorComparisonApp = (function() {
         document.getElementById('quantity-results').scrollIntoView({ behavior: 'smooth' });
     };
     
-    // Calculate equivalence between processors
     const calculateEquivalence = function(sourceProcessor, targetProcessor, sourceType, targetType, workloadFactor, sourceQuantity) {
         let sourcePerformancePerProcessor, targetPerformancePerProcessor;
         
@@ -387,7 +386,7 @@ const ProcessorComparisonApp = (function() {
             targetPerformancePerProcessor = targetProcessor.mips * (workloadFactor / 120);
         }
         
-        // Calculate total source performance
+        // Calculate total source performance - ONLY multiply source by quantity
         const totalSourcePerformance = sourcePerformancePerProcessor * sourceQuantity;
         
         // Calculate required target quantity
