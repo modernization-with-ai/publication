@@ -27,10 +27,19 @@ const ProcessorComparisonApp = (function() {
             await loadData();
             
             // Initialize UI components
+            console.log('UIModule loading 1.');
             UIModule.initializeTabs();
+            
+            console.log('UIModule loading 2.');
             UIModule.initializeProcessorSelectors(processorData);
+            
+            console.log('UIModule loading 3.');
             UIModule.initializeWorkloadSelector(workloadData);
+            
+            console.log('UIModule loading 4.');
             UIModule.initializeMigrationCalculator();
+            
+            console.log('UIModule loaded successfully.');
             setupEventListeners();
             
             // Hide loading indicator
@@ -62,10 +71,10 @@ const ProcessorComparisonApp = (function() {
             if (!workloadResponse.ok) {
                 throw new Error(`Failed to load workload data: ${workloadResponse.status}`);
             }
-            workloadData = await workloadResponse.json();
-            
-            console.log('Data loaded successfully:', { processorData, workloadData });
+            workloadData = await workloadResponse.json();            
+
             UIModule.hideLoading();
+            console.log('Data loaded successfully:', { processorData, workloadData });
         } catch (error) {
             console.error('Error loading data:', error);
             throw error;
