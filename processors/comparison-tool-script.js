@@ -597,9 +597,12 @@ function updateComparisonResults(processor1, processor2, processor1Type, process
     updateCharts(processor1, processor2, processor1Type, processor2Type, workloadType);
 }
 
-// Update comparison summary
-function updateSummary(processor1, processor2, processor1Type, processor2Type) {
+function updateSummary(processor1, processor2, processor1Type, processor2Type, workloadType) {
     const summaryText = document.getElementById('summary-text');
+    if (!summaryText) {
+        console.error('Element with ID "summary-text" not found');
+        return;
+    }
     
     let processor1Performance, processor2Performance;
     
@@ -660,6 +663,10 @@ function updateSummary(processor1, processor2, processor1Type, processor2Type) {
     
     // Update score cards
     const scoreContainer = document.querySelector('.score-container');
+    if (!scoreContainer) {
+        console.error('Score container element not found');
+        return;
+    }
     
     let scoreCardsHtml = '';
     
@@ -1358,7 +1365,7 @@ function updateCharts(processor1, processor2, processor1Type, processor2Type, wo
     });
 }
 
-// Calculate migration sizing
+// Update the call to updateMigrationResults in calculateMigrationSizing function
 function calculateMigrationSizing() {
     // Get input values
     const sourceMips = parseInt(document.getElementById('source-mips').value);
@@ -1441,7 +1448,9 @@ function calculateMigrationSizing() {
         requiredItaniumCores,
         requiredXeonCores,
         targetPlatform,
-        workloadTypeId
+        workloadTypeId,
+        itaniumMipsPerCore,  // Pass this parameter
+        xeonMipsPerCore      // Pass this parameter
     );
     
     // Show results
@@ -1451,7 +1460,6 @@ function calculateMigrationSizing() {
     document.getElementById('migration-results').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Update migration results UI
 function updateMigrationResults(
     sourceMips,
     sourceUtilization,
@@ -1460,7 +1468,9 @@ function updateMigrationResults(
     requiredItaniumCores,
     requiredXeonCores,
     targetPlatform,
-    workloadTypeId
+    workloadTypeId,
+    itaniumMipsPerCore,  // Add this parameter
+    xeonMipsPerCore     // Add this parameter
 ) {
     // Get workload name
     let workloadName;
@@ -1473,6 +1483,11 @@ function updateMigrationResults(
     
     // Update summary
     const migrationSummary = document.getElementById('migration-summary');
+    if (!migrationSummary) {
+        console.error('Element with ID "migration-summary" not found');
+        return;
+    }
+    
     migrationSummary.innerHTML = `
         <p class="mb-2">For a mainframe workload of <strong>${sourceMips} MIPS</strong> at <strong>${sourceUtilization}%</strong> utilization, 
         with a <strong>${workloadName}</strong> workload type (${workloadFactor} tpm/MIPS), the migration sizing results are:</p>
@@ -1483,27 +1498,34 @@ function updateMigrationResults(
     const powerResults = document.getElementById('power-migration-results');
     const intelResults = document.getElementById('intel-migration-results');
     
+    if (!powerResults || !intelResults) {
+        console.error('Migration results container elements not found');
+        return;
+    }
+    
     if (targetPlatform === 'power' || targetPlatform === 'both') {
         powerResults.classList.remove('hidden');
         
         // Update POWER sizing details
         const powerSizingDetails = document.getElementById('power-sizing-details');
-        powerSizingDetails.innerHTML = `
-            <p class="mb-2">Required IBM POWER cores: <strong>${requiredItaniumCores}</strong></p>
-            <p class="mb-2">Based on a conversion factor of <strong>${itaniumMipsPerCore} MIPS per core</strong> for Itanium processors.</p>
-            
-            <div class="mt-4">
-                <h4 class="font-semibold mb-2">Recommended POWER Configuration:</h4>
-                ${getRecommendedPowerConfiguration(requiredItaniumCores)}
-            </div>
-            
-            <div class="mt-4 p-3 bg-blue-50 rounded">
-                <h4 class="font-semibold mb-1">POWER Advantages for this Workload:</h4>
-                <ul class="list-disc list-inside text-sm">
-                    ${getPowerAdvantages(workloadTypeId)}
-                </ul>
-            </div>
-        `;
+        if (powerSizingDetails) {
+            powerSizingDetails.innerHTML = `
+                <p class="mb-2">Required IBM POWER cores: <strong>${requiredItaniumCores}</strong></p>
+                <p class="mb-2">Based on a conversion factor of <strong>${itaniumMipsPerCore} MIPS per core</strong> for Itanium processors.</p>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Recommended POWER Configuration:</h4>
+                    ${getRecommendedPowerConfiguration(requiredItaniumCores)}
+                </div>
+                
+                <div class="mt-4 p-3 bg-blue-50 rounded">
+                    <h4 class="font-semibold mb-1">POWER Advantages for this Workload:</h4>
+                    <ul class="list-disc list-inside text-sm">
+                        ${getPowerAdvantages(workloadTypeId)}
+                    </ul>
+                </div>
+            `;
+        }
     } else {
         powerResults.classList.add('hidden');
     }
@@ -1513,22 +1535,24 @@ function updateMigrationResults(
         
         // Update Intel sizing details
         const intelSizingDetails = document.getElementById('intel-sizing-details');
-        intelSizingDetails.innerHTML = `
-            <p class="mb-2">Required Intel x86 cores: <strong>${requiredXeonCores}</strong></p>
-            <p class="mb-2">Based on a conversion factor of <strong>${xeonMipsPerCore} MIPS per core</strong> for Xeon processors.</p>
-            
-            <div class="mt-4">
-                <h4 class="font-semibold mb-2">Recommended Intel Configuration:</h4>
-                ${getRecommendedIntelConfiguration(requiredXeonCores)}
-            </div>
-            
-            <div class="mt-4 p-3 bg-blue-50 rounded">
-                <h4 class="font-semibold mb-1">Intel x86 Advantages for this Workload:</h4>
-                <ul class="list-disc list-inside text-sm">
-                    ${getIntelAdvantages(workloadTypeId)}
-                </ul>
-            </div>
-        `;
+        if (intelSizingDetails) {
+            intelSizingDetails.innerHTML = `
+                <p class="mb-2">Required Intel x86 cores: <strong>${requiredXeonCores}</strong></p>
+                <p class="mb-2">Based on a conversion factor of <strong>${xeonMipsPerCore} MIPS per core</strong> for Xeon processors.</p>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold mb-2">Recommended Intel Configuration:</h4>
+                    ${getRecommendedIntelConfiguration(requiredXeonCores)}
+                </div>
+                
+                <div class="mt-4 p-3 bg-blue-50 rounded">
+                    <h4 class="font-semibold mb-1">Intel x86 Advantages for this Workload:</h4>
+                    <ul class="list-disc list-inside text-sm">
+                        ${getIntelAdvantages(workloadTypeId)}
+                    </ul>
+                </div>
+            `;
+        }
     } else {
         intelResults.classList.add('hidden');
     }
@@ -2176,4 +2200,36 @@ document.addEventListener('DOMContentLoaded', function() {
     addExportFunctionality();
     addPrintFunctionality();
     initializeFeedbackSystem();
+});
+
+// Add DOM ready check function to ensure all elements are loaded before accessing them
+function domReady(callback) {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(callback, 1);
+    } else {
+        document.addEventListener('DOMContentLoaded', callback);
+    }
+}
+
+// Wrap initialization in domReady to ensure DOM is fully loaded
+domReady(function() {
+    try {
+        // Load data from JSON files
+        loadData().then(() => {
+            // Initialize UI components
+            initializeTabs();
+            initializeProcessorSelectors();
+            initializeWorkloadSelector();
+            initializeMigrationCalculator();
+            setupEventListeners();
+            
+            console.log('Processor Comparison Tool initialized successfully.');
+        }).catch(error => {
+            console.error('Error loading data:', error);
+            showError('Failed to load data. Please try refreshing the page.');
+        });
+    } catch (error) {
+        console.error('Error initializing the application:', error);
+        showError('Failed to initialize the application. Please try refreshing the page.');
+    }
 });
