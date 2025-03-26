@@ -1,6 +1,6 @@
 # Processor Architecture Comparison Tool
 
-A comprehensive web-based tool for comparing IBM POWER, Intel x86, and IBM Mainframe processors, with a focus on mainframe migration sizing calculations.
+A unofficial comprehensive web-based tool for comparing IBM POWER, Intel x86, and IBM Mainframe processors, with a focus on mainframe migration sizing calculations.
 
 ## Overview
 
@@ -138,6 +138,7 @@ The data used in this tool comes from:
 ## Contributing
 
 Contributions to improve the tool are welcome! Please feel free to submit issues or pull requests.
+Author: Gregorio Mommm (Greg)
 
 ## License
 
