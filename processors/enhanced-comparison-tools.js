@@ -674,6 +674,8 @@ const UIModule = (function() {
             // Update message
             document.getElementById('loading-message').textContent = message;
             loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.remove('truly-hidden');
+            loadingOverlay.style.display = '';
         }
     };
     
@@ -690,6 +692,8 @@ const UIModule = (function() {
         const loadingOverlay = document.getElementById('loading-overlay');
         if (loadingOverlay) {
             loadingOverlay.classList.add('hidden');
+            loadingOverlay.classList.add('truly-hidden');
+            loadingOverlay.style.display = 'none !important';
         }
     };
     
