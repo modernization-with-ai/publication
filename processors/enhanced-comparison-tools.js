@@ -65,6 +65,7 @@ const ProcessorComparisonApp = (function() {
             workloadData = await workloadResponse.json();
             
             console.log('Data loaded successfully:', { processorData, workloadData });
+            UIModule.hideLoading();
         } catch (error) {
             console.error('Error loading data:', error);
             throw error;
