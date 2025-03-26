@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Processor Architecture Comparison Tool</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css">
+    <style>
+        :root {
+            --power-color: #0f62fe;
+            --intel-color: #0071c5;
+            --mainframe-color: #663399;
+        }
+
+        .power-bg {
+            background-color: var(--power-color);
+        }
+
+        .intel-bg {
+            background-color: var(--intel-color);
+        }
+
+        .mainframe-bg {
+            background-color: var(--mainframe-color);
+        }
+
+        .power-text {
+            color: var(--power-color);
+        }
+
+        .intel-text {
+            color: var(--intel-color);
+        }
+
+        .mainframe-text {
+            color: var(--mainframe-color);
+        }
+
+        .power-border {
+            border-color: var(--power-color);
+        }
+
+        .intel-border {
+            border-color: var(--intel-color);
+        }
+
+        .mainframe-border {
+            border-color: var(--mainframe-color);
+        }
+
+        .tab-active {
+            border-bottom-width: 4px;
+            font-weight: bold;
+        }
+
+        .bar-power {
+            background: linear-gradient(90deg, #0062ff 0%, #0095ff 100%);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .bar-intel {
+            background: linear-gradient(90deg, #0071c5 0%, #00a2e8 100%);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .bar-mainframe {
+            background: linear-gradient(90deg, #663399 0%, #9370db 100%);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: #f2f7ff;
+        }
+
+        .comparison-table th {
+            background-color: #e2e8f0;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* Loading overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Dark mode styles */
+        .dark-mode {
+            background-color: #1a202c;
+            color: #f7fafc;
+        }
+
+        .dark-mode .bg-white {
+            background-color: #2d3748;
+            color: #f7fafc;
+        }
+
+        .dark-mode .text-gray-700 {
+            color: #e2e8f0;
+        }
+
+        .dark-mode .bg-gray-50 {
+            background-color: #1a202c;
+        }
+
+        .dark-mode .bg-gray-100 {
+            background-color: #2d3748;
+        }
+
+        .dark-mode .bg-blue-50 {
+            background-color: #2c3e50;
+        }
+
+        .dark-mode .text-gray-600 {
+            color: #cbd5e0;
+        }
+
+        .dark-mode .border {
+            border-color: #4a5568;
+        }
+
+        .dark-mode .shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
+        }
+
+        /* Animated hover effects */
+        .processor-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .processor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-2 flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-xl font-bold mb-2 md:mb-0">Enhanced Processor Architecture Comparison Tool</h1>
+            <div class="flex flex-wrap justify-center space-x-2 space-y-2 md:space-y-0">
+                <a href="#processor-comparison" class="py-2 px-3 text-gray-700 hover:text-blue-600">Processor
+                    Comparison</a>
+                <a href="#processor-quantity" class="py-2 px-3 text-gray-700 hover:text-blue-600">Processor
+                    Quantity</a>
+                <a href="#mainframe-migration" class="py-2 px-3 text-gray-700 hover:text-blue-600">Mainframe
+                    Migration</a>
+                <a href="#architecture-comparison" class="py-2 px-3 text-gray-700 hover:text-blue-600">Architecture
+                    Comparison</a>
+                <a href="#about" class="py-2 px-3 text-gray-700 hover:text-blue-600">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Processor Comparison Section -->
+        <section id="processor-comparison" class="mb-16">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">Processor Comparison</h2>
+                <!-- Comparison Tabs -->
+                <div class="flex flex-wrap border-b mb-6">
+                    <button type="button" id="tab-power-intel"
+                        class="tab tab-active power-border px-4 py-2 mr-2 mb-2 focus:outline-none">POWER vs Intel</button>
+                    <button type="button" id="tab-power-mainframe" class="tab px-4 py-2 mr-2 mb-2 focus:outline-none">POWER
+                        vs Mainframe</button>
+                    <button type="button" id="tab-intel-mainframe" class="tab px-4 py-2 mr-2 mb-2 focus:outline-none">Intel
+                        vs Mainframe</button>
+                    <button type="button" id="tab-all" class="tab px-4 py-2 mb-2 focus:outline-none">All Platforms</button>
+                </div>
+                <!-- Processor Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- POWER Processor Selection -->
+                    <div id="power-selector-container" class="border rounded-lg p-4 processor-col">
+                        <h3 class="text-lg font-semibold power-text mb-2">IBM POWER Processor</h3>
+                        <select id="power-processor" class="w-full p-2 border rounded">
+                            <option value="">Select POWER Processor</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Intel Processor Selection -->
+                    <div id="intel-selector-container" class="border rounded-lg p-4 processor-col">
+                        <h3 class="text-lg font-semibold intel-text mb-2">Intel Processor</h3>
+                        <select id="intel-processor" class="w-full p-2 border rounded">
+                            <option value="">Select Intel Processor</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Mainframe Processor Selection -->
+                    <div id="mainframe-selector-container" class="border rounded-lg p-4 processor-col">
+                        <h3 class="text-lg font-semibold mainframe-text mb-2">IBM Mainframe</h3>
+                        <select id="mainframe-processor" class="w-full p-2 border rounded">
+                            <option value="">Select Mainframe Processor</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Processor Quantity and Workload Type Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Processor Quantity -->
+                    <div class="border rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-2">Processor Quantity</h3>
+                        <div class="flex items-center">
+                            <input type="number" id="processor-quantity" class="w-full p-2 border rounded" min="1" value="1">
+                            <div class="tooltip ml-2">
+                                <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="tooltip-text">Specify how many of the first processor you want to compare</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workload Type Selection -->
+                    <div class="border rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-2">Workload Type</h3>
+                        <select id="workload-type" class="w-full p-2 border rounded">
+                            <option value="">Select Workload Type</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+
+                <div id="workload-info" class="mt-4 p-4 bg-blue-50 rounded hidden">
+                    <!-- Workload information will be displayed here -->
+                </div>
+
+                <button type="button" id="compare-processors"
+                    class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 focus:outline-none transition duration-300 ease-in-out transform hover:scale-105">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Compare Processors
+                    </span>
+                </button>
+
+                <!-- Comparison Results -->
+                <div id="comparison-results" class="mt-8 hidden">
+                    <!-- Results Tabs -->
+                    <div class="flex flex-wrap border-b mb-6">
+                        <button type="button" id="result-tab-summary"
+                            class="result-tab result-tab-active border-blue-600 px-4 py-2 mr-2 mb-2 focus:outline-none">Summary</button>
+                        <button type="button" id="result-tab-details"
+                            class="result-tab px-4 py-2 mr-2 mb-2 focus:outline-none">Details</button>
+                        <button type="button" id="result-tab-chart"
+                            class="result-tab px-4 py-2 mb-2 focus:outline-none">Charts</button>
+                    </div>
+
+                    <!-- Summary Tab -->
+                    <div id="result-summary" class="result-content">
+                        <div class="p-4 mb-6 bg-blue-50 rounded">
+                            <h3 class="text-xl font-semibold mb-2">Comparison Summary</h3>
+                            <p id="summary-text" class="text-lg"></p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 score-container">
+                            <!-- Score cards will be generated here -->
+                        </div>
+                        
+                        <div id="comparison-metrics">
+                            <!-- Comparison metrics with bars will be displayed here -->
+                        </div>
+                        
+                        <div class="flex flex-wrap justify-end mt-4 space-x-2">
+                            <button id="export-results" class="py-2 px-4 bg-green-600 text-white font-semibold rounded hover:bg-green-700 focus:outline-none transition duration-300 ease-in-out transform hover:scale-105">
+                                <span class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    Export Results
+                                </span>
+                            </button>
+                            <button id="print-results" class="py-2 px-4 bg-purple-600 text-white font-semibold rounded hover:bg-purple-700 focus:outline-none transition duration-300 ease-in-out transform hover:scale-105">
+                                <span class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                    </svg>
+                                    Print Results
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Details Tab -->
+                    <div id="result-details" class="result-content hidden">
+                        <table class="comparison-table w-full border">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Specification</th>
+                                    <th scope="col" id="details-col1-header"></th>
+                                    <th scope="col" id="details-col2-header"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparison-table-body">
+                                <!-- Table rows will be generated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Charts Tab -->
+                    <div id="result-chart" class="result-content hidden">
+                        <div class="chart-container mb-8">
+                            <canvas id="radar-chart"></canvas>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="chart-container">
+                                <h3 class="text-lg font-semibold mb-2">Single-Thread Performance</h3>
+                                <canvas id="single-thread-chart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3 class="text-lg font-semibold mb-2">Multi-Thread Performance</h3>
+                                <canvas id="multi-thread-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Processor Quantity Comparison Section -->
+        <section id="processor-quantity-comparison" class="mb-16 hidden">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">Processor Quantity Comparison</h2>
+                
+                <div class="p-4 bg-blue-50 rounded mb-6">
+                    <p>This section shows how many of the second processor are needed to match the performance of the selected quantity of the first processor.</p>
+                </div>
+
+                <div class="chart-container mb-6">
+                    <canvas id="processor-quantity-chart"></canvas>
+                </div>
+
+                <div id="quantity-comparison-result" class="p-4 border rounded mb-6 text-center">
+                    <!-- Comparison result will be displayed here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Processor Quantity Comparison Section -->
+        <section id="processor-quantity" class="mb-16">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">Detailed Processor Quantity Calculator</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="border rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4">Source Processor</h3>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Processor Type</label>
+                            <select id="source-processor-type" class="w-full p-2 border rounded">
+                                <option value="">Select Processor Type</option>
+                                <option value="power">IBM POWER</option>
+                                <option value="intel">Intel</option>
+                                <option value="mainframe">IBM Mainframe</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Processor Model</label>
+                            <select id="source-processor" class="w-full p-2 border rounded">
+                                <option value="">Select Processor Model</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Quantity</label>
+                            <input type="number" id="source-processor-quantity" class="w-full p-2 border rounded" min="1" value="1">
+                        </div>
+                    </div>
+                    
+                    <div class="border rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4">Target Processor</h3>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Processor Type</label>
+                            <select id="target-processor-type" class="w-full p-2 border rounded">
+                                <option value="">Select Processor Type</option>
+                                <option value="power" class="target-processor-option">IBM POWER</option>
+                                <option value="intel" class="target-processor-option">Intel</option>
+                                <option value="mainframe" class="target-processor-option">IBM Mainframe</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Processor Model</label>
+                            <select id="target-processor" class="w-full p-2 border rounded">
+                                <option value="">Select Processor Model</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border rounded-lg p-4 mb-6">
+                    <h3 class="text-lg font-semibold mb-2">Workload Type</h3>
+                    <select id="quantity-workload-type" class="w-full p-2 border rounded">
+                        <option value="">Select Workload Type</option>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <button type="button" id="calculate-processor-quantity"
+                    class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 focus:outline-none transition duration-300 ease-in-out transform hover:scale-105">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Calculate Processor Equivalence
+                    </span>
+                </button>
+
+                <!-- Quantity Results -->
+                <div id="quantity-results" class="mt-8 hidden">
+                    <div class="p-4 bg-blue-50 rounded mb-6">
+                        <h3 class="text-xl font-semibold mb-2">Processor Quantity Equivalence</h3>
+                        <div id="quantity-summary"></div>
+                    </div>
+
+                    <div class="chart-container mb-6">
+                        <canvas id="quantity-result-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mainframe Migration Section -->
+        <section id="mainframe-migration" class="mb-16">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">Mainframe Migration Sizing Calculator</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="border rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4">Workload Sizing Input</h3>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Source Mainframe MIPS Capacity</label>
+                            <input type="number" id="source-mips" class="w-full p-2 border rounded"
+                                placeholder="Enter MIPS capacity">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Current Utilization (%)</label>
+                            <input type="number" id="source-utilization" class="w-full p-2 border rounded" value="100"
+                                min="1" max="100" placeholder="Enter utilization percentage">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Workload Type</label>
+                            <select id="migration-workload-type" class="w-full p-2 border rounded">
+                                <option value="">Select Workload Type</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+
+                        <div id="custom-workload-mix" class="hidden">
+                            <h4 class="font-semibold mb-2">Custom Workload Mix</h4>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="mb-2">
+                                    <label class="block text-gray-700 text-sm">Processor Intensive (%)</label>
+                                    <input type="number" id="custom-processor-intensive"
+                                        class="w-full p-2 border rounded" value="0" min="0" max="100">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="block text-gray-700 text-sm">TPC-C (%)</label>
+                                    <input type="number" id="custom-tpc-c" class="w-full p-2 border rounded" value="0"
+                                        min="0" max="100">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="block text-gray-700 text-sm">Commercial (%)</label>
+                                    <input type="number" id="custom-commercial" class="w-full p-2 border rounded"
+                                        value="0" min="0" max="100">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="block text-gray-700 text-sm">Mixed (%)</label>
+                                    <input type="number" id="custom-mixed" class="w-full p-2 border rounded" value="0"
+                                        min="0" max="100">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="block text-gray-700 text-sm">Business Intelligence (%)</label>
+                                    <input type="number" id="custom-bi" class="w-full p-2 border rounded" value="0"
+                                        min="0" max="100">
+                                </div>
+                                <div class="mb-2 flex items-end">
+                                    <span id="custom-total" class="text-sm font-semibold">Total: 0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Target Platform</label>
+                            <select id="migration-target-platform" class="w-full p-2 border rounded">
+                                <option value="">Select Target Platform</option>
+                                <option value="power">IBM POWER</option>
+                                <option value="intel">Intel x86</option>
+                                <option value="both">Compare Both</option>
+                            </select>
+                        </div>
+
+                        <button type="button" id="calculate-migration"
+                            class="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 focus:outline-none transition duration-300 ease-in-out transform hover:scale-105">
+                            <span class="flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                </svg>
+                                Calculate Migration Sizing
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="border rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4">Migration Sizing Information</h3>
+
+                        <div class="bg-blue-50 p-4 rounded mb-4">
+                            <h4 class="font-semibold mb-2">About Mainframe Migration Sizing</h4>
+                            <p class="text-sm">Migration sizing uses the Workload Factor (WLF) approach that converts
+                                MIPS to transactions per minute (tpm), then determines the required processor cores
+                                based on tpm capacity. This methodology accounts for different workload characteristics,
+                                providing more accurate sizing than simple MIPS comparisons.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="font-semibold mb-2">Workload Factor (WLF) Values</h4>
+                            <ul class="text-sm list-disc list-inside">
+                                <li><span class="font-medium">30 tpm/MIPS:</span> Processor-intensive workloads
+                                    (scientific computing, simulations)</li>
+                                <li><span class="font-medium">75 tpm/MIPS:</span> TPC-C workloads (SAP SD)</li>
+                                <li><span class="font-medium">120 tpm/MIPS:</span> Commercial workloads (SAP ERP, Oracle
+                                    E-Business Suite)</li>
+                                <li><span class="font-medium">160 tpm/MIPS:</span> Mixed workloads (SAP BW)</li>
+                                <li><span class="font-medium">200 tpm/MIPS:</span> Business intelligence workloads (data
+                                    warehousing)</li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="font-semibold mb-2">Conversion Formula</h4>
+                            <p class="text-sm font-mono bg-gray-100 p-2 rounded">Required MIPS = Utilization × Current
+                                tpm / WLF</p>
+                            <p class="text-sm mt-2">Where:</p>
+                            <ul class="text-sm list-disc list-inside">
+                                <li>Utilization: Current mainframe utilization percentage</li>
+                                <li>Current tpm: Transaction throughput (calculated from MIPS × WLF)</li>
+                                <li>WLF: Workload Factor based on workload type</li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="font-semibold mb-2">Validated MIPS per Core Values</h4>
+                            <ul class="text-sm list-disc list-inside">
+                                <li><span class="font-medium">Intel Xeon (3.0 GHz Quad Core):</span> 271 MIPS per core
+                                </li>
+                                <li><span class="font-medium">Intel Itanium (1.6 GHz Dual Core):</span> 295 MIPS per
+                                    core</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Migration Results -->
+                <div id="migration-results" class="mt-8 hidden">
+                    <div class="p-4 bg-blue-50 rounded mb-6">
+                        <h3 class="text-xl font-semibold mb-2">Migration Sizing Results</h3>
+                        <p id="migration-summary" class="text-lg"></p>
+                    </div>
+                    
+                    <div class="chart-container mb-6">
+                        <canvas id="migration-chart"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div id="power-migration-results" class="border rounded-lg p-4">
+                            <h3 class="text-lg font-semibold power-text mb-4">IBM POWER Sizing</h3>
+                            <div id="power-sizing-details"></div>
+                        </div>
+
+                        <div id="intel-migration-results" class="border rounded-lg p-4">
+                            <h3 class="text-lg font-semibold intel-text mb-4">Intel x86 Sizing</h3>
+                            <div id="intel-sizing-details"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Comparison Section -->
+        <section id="architecture-comparison" class="mb-16">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">Architecture Comparison</h2>
+
+                <!-- Architecture Tabs -->
+                <div class="flex flex-wrap border-b mb-6">
+                    <button type="button" id="arch-tab-virtualization"
+                        class="arch-tab arch-tab-active border-blue-600 px-4 py-2 mr-2 mb-2 focus:outline-none">Virtualization</button>
+                    <button type="button" id="arch-tab-network"
+                        class="arch-tab px-4 py-2 mr-2 mb-2 focus:outline-none">Network Architecture</button>
+                    <button type="button" id="arch-tab-cloud" class="arch-tab px-4 py-2 mb-2 focus:outline-none">Cloud &amp;
+                        Virtualization</button>
+                </div>
+
+                <!-- Virtualization Tab -->
+                <div id="arch-virtualization" class="arch-content">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="mainframe-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">IBM Mainframe Virtualization</h3>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-2">PR/SM LPAR</h4>
+                                <p class="text-sm mb-3">IBM's Processor Resource/System Manager provides hardware-level
+                                    virtualization with extremely low overhead.</p>
+
+                                <h4 class="font-semibold mb-1">Strengths:</h4>
+                                <ul class="text-sm list-disc list-inside mb-3">
+                                    <li>Hardware-enforced isolation</li>
+                                    <li>Dedicated I/O processors</li>
+                                    <li>Very low overhead (typically &lt;5%)</li>
+                                    <li>Strong workload isolation</li>
+                                    <li>Mature hypervisor technology</li>
+                                    <li>Designed for mission-critical workloads</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Weaknesses:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Higher cost</li>
+                                    <li>Proprietary architecture</li>
+                                    <li>Limited ecosystem</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="power-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">IBM POWER Virtualization</h3>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-2">PowerVM</h4>
+                                <p class="text-sm mb-3">IBM's virtualization technology for POWER systems with
+                                    micro-partitioning and shared processor pools.</p>
+
+                                <h4 class="font-semibold mb-1">Strengths:</h4>
+                                <ul class="text-sm list-disc list-inside mb-3">
+                                    <li>Micro-partitioning (down to 0.01 of a core)</li>
+                                    <li>Live partition mobility</li>
+                                    <li>Dynamic resource allocation</li>
+                                    <li>SMT-8 (8 threads per core) for dense virtualization</li>
+                                    <li>Strong isolation</li>
+                                    <li>Mature hypervisor with mainframe-inspired features</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Weaknesses:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Higher cost than x86 virtualization</li>
+                                    <li>Smaller ecosystem than x86</li>
+                                    <li>Specialized skills required</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="intel-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">Intel x86 Virtualization</h3>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-2">Various (VMware, KVM, Hyper-V, Xen)</h4>
+                                <p class="text-sm mb-3">x86 virtualization through hardware-assisted hypervisors.</p>
+
+                                <h4 class="font-semibold mb-1">Strengths:</h4>
+                                <ul class="text-sm list-disc list-inside mb-3">
+                                    <li>Broad ecosystem of virtualization solutions</li>
+                                    <li>Good performance with hardware-assisted virtualization</li>
+                                    <li>Cost-effective virtualization for general workloads</li>
+                                    <li>Familiar management tools</li>
+                                    <li>Wide range of supported guest operating systems</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Weaknesses:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Higher overhead than POWER or mainframe</li>
+                                    <li>Less isolation between workloads</li>
+                                    <li>Less predictable performance under heavy load</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Architecture Tab -->
+                <div id="arch-network" class="arch-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="mainframe-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">IBM Mainframe Network Architecture</h3>
+                            </div>
+                            <div class="p-4">
+                                <p class="text-sm mb-3">IBM mainframes feature integrated networking with dedicated I/O
+                                    processors and channels.</p>
+
+                                <h4 class="font-semibold mb-1">Components:</h4>
+                                <ul class="text-sm list-disc list-inside mb-3">
+                                    <li>Integrated Hardware Cryptographic Acceleration</li>
+                                    <li>OSA-Express (Open Systems Adapter)</li>
+                                    <li>HiperSockets (high-speed in-memory network)</li>
+                                    <li>Shared Memory Communications (SMC)</li>
+                                    <li>z/OS Communications Server</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Strengths:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Extremely high throughput</li>
+                                    <li>Very low latency</li>
+                                    <li>Hardware encryption offload</li>
+                                    <li>High reliability and redundancy</li>
+                                    <li>Integrated into the system architecture</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="power-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">IBM POWER Network Architecture</h3>
+                            </div>
+                            <div class="p-4">
+                                <p class="text-sm mb-3">POWER systems utilize high-bandwidth I/O subsystems with PCIe
+                                    connectivity.</p>
+
+                                <h4 class="font-semibold mb-1">Components:</h4>
+                                <ul class="text-sm list-disc list-inside mb-3">
+                                    <li>PowerVM Virtual I/O Server (VIOS)</li>
+                                    <li>Shared Ethernet Adapters (SEA)</li>
+                                    <li>SR-IOV capable adapters</li>
+                                    <li>RoCE (RDMA over Converged Ethernet)</li>
+                                    <li>PowerVM logical partitioning of network resources</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Strengths:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>High bandwidth</li>
+                                    <li>Virtualized I/O with minimal overhead</li>
+                                    <li>SR-IOV support for direct hardware access</li>
+                                    <li>Good isolation between partitions</li>
+                                    <li>Flexible networking options</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="intel-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">Intel x86 Network Architecture</h3>
+                            </div>
+                            <div class="p-4">
+                                <p class="text-sm mb-3">Intel-based systems use standard PCIe networking with various
+                                    virtualization technologies.</p>
+
+                                <h4 class="font-semibold mb-1">Components:</h4>
+                                <ul class="text-sm list-disc list-inside mb-3">
+                                    <li>Standard PCIe network adapters</li>
+                                    <li>SR-IOV capable adapters</li>
+                                    <li>DPDK (Data Plane Development Kit)</li>
+                                    <li>Virtualized networking via hypervisors</li>
+                                    <li>Software-defined networking options</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Strengths:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Wide range of networking options</li>
+                                    <li>Cost-effective solutions</li>
+                                    <li>Good performance with specialized adapters</li>
+                                    <li>Flexible configuration options</li>
+                                    <li>Strong ecosystem support</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloud & Virtualization Tab -->
+                <div id="arch-cloud" class="arch-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="mainframe-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">IBM Mainframe Architecture</h3>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-1">Partitioning Technology:</h4>
+                                <p class="text-sm mb-2">PR/SM LPAR (Processor Resource/System Manager Logical
+                                    Partitioning)</p>
+                                <p class="text-sm mb-3">Hardware-level partitioning with dedicated resources and strong
+                                    isolation.</p>
+
+                                <h4 class="font-semibold mb-1">Virtualization Technology:</h4>
+                                <p class="text-sm mb-2">z/VM</p>
+                                <p class="text-sm mb-3">Hypervisor supporting hundreds to thousands of virtual machines
+                                    on a single system.</p>
+
+                                <h4 class="font-semibold mb-1">Cloud Technologies:</h4>
+                                <ul class="text-sm list-disc list-inside mb-2">
+                                    <li>IBM Cloud Infrastructure Center</li>
+                                    <li>z/OSMF</li>
+                                    <li>z/VM Cloud Connector</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Key Features:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Hardware-enforced isolation</li>
+                                    <li>Extreme consolidation ratios</li>
+                                    <li>Very low virtualization overhead</li>
+                                    <li>Designed for mission-critical workloads</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="power-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">IBM POWER Architecture</h3>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-1">Partitioning Technology:</h4>
+                                <p class="text-sm mb-2">PowerVM LPAR</p>
+                                <p class="text-sm mb-3">Hypervisor-based logical partitioning with micro-partitioning
+                                    capabilities.</p>
+
+                                <h4 class="font-semibold mb-1">Virtualization Technology:</h4>
+                                <p class="text-sm mb-2">PowerVM</p>
+                                <p class="text-sm mb-3">Integrated virtualization technology for POWER systems.</p>
+
+                                <h4 class="font-semibold mb-1">Cloud Technologies:</h4>
+                                <ul class="text-sm list-disc list-inside mb-2">
+                                    <li>PowerVC</li>
+                                    <li>IBM Cloud PowerVS</li>
+                                    <li>OpenStack</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Key Features:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Micro-partitioning (as small as 0.01 of a core)</li>
+                                    <li>Live Partition Mobility</li>
+                                    <li>Dynamic resource allocation</li>
+                                    <li>Shared Processor Pools</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden processor-card">
+                            <div class="intel-bg text-white p-3">
+                                <h3 class="font-semibold text-lg">Intel x86 Architecture</h3>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold mb-1">Partitioning Technology:</h4>
+                                <p class="text-sm mb-2">Various (Physical separation, hardware partitioning in high-end
+                                    systems)</p>
+                                <p class="text-sm mb-3">Limited hardware partitioning in high-end systems, generally
+                                    relies on hypervisor-based virtualization.</p>
+
+                                <h4 class="font-semibold mb-1">Virtualization Technology:</h4>
+                                <p class="text-sm mb-2">Various (VMware ESXi, Microsoft Hyper-V, KVM, Xen)</p>
+                                <p class="text-sm mb-3">Hardware-assisted virtualization through multiple hypervisor
+                                    options.</p>
+
+                                <h4 class="font-semibold mb-1">Cloud Technologies:</h4>
+                                <ul class="text-sm list-disc list-inside mb-2">
+                                    <li>VMware vCloud</li>
+                                    <li>OpenStack</li>
+                                    <li>Microsoft Azure Stack</li>
+                                    <li>Various other cloud platforms</li>
+                                </ul>
+
+                                <h4 class="font-semibold mb-1">Key Features:</h4>
+                                <ul class="text-sm list-disc list-inside">
+                                    <li>Wide range of virtualization options</li>
+                                    <li>Broad ecosystem support</li>
+                                    <li>Cost-effective solutions</li>
+                                    <li>Familiar management tools</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="mb-16">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-2xl font-bold mb-6">About This Tool</h2>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2">Purpose</h3>
+                    <p>This enhanced comparison tool is designed to help organizations understand the performance characteristics
+                        and migration options for different processor architectures. It focuses on IBM POWER, Intel x86,
+                        and IBM Mainframe systems, providing insights into their relative performance for various
+                        workload types and processor quantity calculations.</p>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2">Methodology</h3>
+                    <p class="mb-3">The comparison methodology used in this tool is based on:</p>
+                    <ul class="list-disc list-inside">
+                        <li><span class="font-medium">Workload Factor (WLF) approach:</span> Converts MIPS to
+                            transactions per minute (tpm), then determines the required processor cores based on tpm
+                            capacity.</li>
+                        <li><span class="font-medium">Validated performance metrics:</span> Uses performance data from
+                            testing by Micro Focus and IBM's own methodologies.</li>
+                        <li><span class="font-medium">Workload-specific performance:</span> Accounts for different
+                            performance characteristics based on workload type.</li>
+                        <li><span class="font-medium">Processor quantity comparison:</span> Calculates equivalent quantities
+                            of different processor types based on workload-specific performance characteristics.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2">Key Features</h3>
+                    <ul class="list-disc list-inside">
+                        <li>Processor comparison with detailed specifications and visualization</li>
+                        <li>Processor quantity calculator for performance equivalence</li>
+                        <li>Mainframe migration sizing calculator</li>
+                        <li>Architecture comparison for virtualization, networking, and cloud capabilities</li>
+                        <li>Workload-specific performance analysis</li>
+                        <li>Interactive visualization through charts and metrics</li>
+                        <li>Export and print functionality for reports</li>
+                    </ul>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2">Data Sources</h3>
+                    <p class="mb-3">The data used in this tool comes from:</p>
+                    <ul class="list-disc list-inside">
+                        <li>IBM's Large System Performance Reference (LSPR)</li>
+                        <li>Micro Focus testing on HP Integrity and HP ProLiant servers</li>
+                        <li>Published processor specifications from IBM and Intel</li>
+                        <li>Industry standard benchmarks and performance metrics</li>
+                        <li>HP Sizing Mainframe Workloads research paper</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Author</h3>
+                    <p class="mb-3">Contact:</p>
+                    <ul class="list-disc list-inside">
+                        <li>Gregorio Momm (Greg)</li>
+                        <li>gregoriomomm@gmail.com</li>
+                        <li><a href="https://www.linkedin.com/in/gregoriomomm/" class="text-blue-600 hover:underline">LinkedIn Profile</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white p-4">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <p>Enhanced Processor Architecture Comparison Tool © 2025</p>
+                <div class="mt-2 md:mt-0">
+                    <a href="https://www.linkedin.com/in/gregoriomomm/" class="text-white hover:text-blue-300 mx-2">LinkedIn</a>
+                    <a href="mailto:gregoriomomm@gmail.com" class="text-white hover:text-blue-300 mx-2">Email</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <script src="enhanced-comparison-tool.js"></script>
+</body>
+
+</html>
