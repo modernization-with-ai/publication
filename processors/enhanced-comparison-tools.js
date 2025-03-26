@@ -1,5 +1,20 @@
-// Enhanced Processor Comparison Tool
-// Organized using JavaScript module pattern for better code organization
+
+const updateSectionSpacing = function() {
+    // Add spacing between major sections
+    const sections = document.querySelectorAll('section');
+    sections.forEach(section => {
+        section.style.marginBottom = '50px';
+        section.style.paddingBottom = '50px';
+        section.style.borderBottom = '1px solid #e2e8f0';
+    });
+    
+    // Ensure charts have plenty of room
+    const chartContainers = document.querySelectorAll('.chart-container');
+    chartContainers.forEach(container => {
+        container.style.minHeight = '400px';
+        container.style.marginBottom = '30px';
+    });
+};
 
 // Main Application Module
 const ProcessorComparisonApp = (function() {
@@ -41,6 +56,7 @@ const ProcessorComparisonApp = (function() {
             
             console.log('UIModule loaded successfully.');
             setupEventListeners();
+            updateSectionSpacing();
             
             // Hide loading indicator
             UIModule.hideLoading();
@@ -222,7 +238,6 @@ const ProcessorComparisonApp = (function() {
         
         // Show comparison results and processor quantity comparison section
         document.getElementById('comparison-results').classList.remove('hidden');
-        document.getElementById('processor-quantity-comparison').classList.remove('hidden');
         
         // Pre-fill the processor type dropdown in the quantity comparison section
         document.getElementById('source-processor-type').value = processor1Type;
@@ -296,6 +311,114 @@ const ProcessorComparisonApp = (function() {
             targetProcessorSelect.appendChild(option);
         });
     };
+
+    const updateProcessorQuantityChart = function(sourceProcessor, targetProcessor, sourceType, targetType, sourceQuantity, targetQuantity) {
+        const quantityChartCtx = document.getElementById('quantity-result-chart').getContext('2d');
+        
+        // Prepare colors based on processor types
+        const sourceColor = sourceType === 'power' ? 'rgba(15, 98, 254, 1)' : sourceType === 'intel' ? 'rgba(0, 113, 197, 1)' : 'rgba(102, 51, 153, 1)';
+        const targetColor = targetType === 'power' ? 'rgba(15, 98, 254, 1)' : targetType === 'intel' ? 'rgba(0, 113, 197, 1)' : 'rgba(102, 51, 153, 1)';
+        
+        // Destroy existing chart if it exists
+        if (window.quantityResultChart) {
+            window.quantityResultChart.destroy();
+        }
+        
+        // Get performance metrics for better visualization
+        let sourcePerformance, targetPerformance;
+        
+        if (sourceType === 'mainframe') {
+            sourcePerformance = sourceProcessor.mips * sourceQuantity;
+        } else {
+            sourcePerformance = sourceProcessor.multiThreadScore * sourceQuantity;
+        }
+        
+        if (targetType === 'mainframe') {
+            targetPerformance = targetProcessor.mips * targetQuantity;
+        } else {
+            targetPerformance = targetProcessor.multiThreadScore * targetQuantity;
+        }
+        
+        // Calculate source and target cores
+        const sourceCores = sourceProcessor.cores * sourceQuantity;
+        const targetCores = targetProcessor.cores * targetQuantity;
+        
+        // Create new chart with proper scale adjustments
+        window.quantityResultChart = new Chart(quantityChartCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Processor Quantity', 'Total Cores', 'Performance Score'],
+                datasets: [
+                    {
+                        label: sourceProcessor.name,
+                        backgroundColor: sourceColor,
+                        data: [
+                            sourceQuantity,
+                            sourceCores,
+                            sourcePerformance
+                        ]
+                    },
+                    {
+                        label: targetProcessor.name,
+                        backgroundColor: targetColor,
+                        data: [
+                            targetQuantity,
+                            targetCores,
+                            targetPerformance
+                        ]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                title: {
+                    display: true,
+                    text: `Processor Quantity Equivalence Comparison`,
+                    fontSize: 16
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            const datasetLabel = data.datasets[tooltipItem.datasetIndex].label;
+                            const value = tooltipItem.value;
+                            
+                            // Format performance score with commas for thousands
+                            if (tooltipItem.index === 2) { // Performance Score
+                                return `${datasetLabel}: ${parseInt(value).toLocaleString()}`;
+                            }
+                            
+                            return `${datasetLabel}: ${value}`;
+                        }
+                    }
+                },
+                scales: {
+                    xAxes: [{
+                        gridLines: {
+                            display: true
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            callback: function(value) {
+                                if (value >= 1000) {
+                                    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                }
+                                return value;
+                            }
+                        },
+                        // Use logarithmic scale for better visualization of large differences
+                        type: tooltipItem.index === 2 ? 'logarithmic' : 'linear'
+                    }]
+                }
+            }
+        });
+        
+        // Add chart height adjustment to ensure it fits properly
+        document.querySelector('.chart-container').style.height = '500px';
+    };
+
     
     // Calculate processor quantity equivalence
     const calculateProcessorQuantity = function() {
@@ -357,8 +480,33 @@ const ProcessorComparisonApp = (function() {
         // Show results section
         document.getElementById('quantity-results').classList.remove('hidden');
         
-        // Scroll to results
-        document.getElementById('quantity-results').scrollIntoView({ behavior: 'smooth' });
+        // Create enhanced chart with proper scaling
+        updateProcessorQuantityChart(
+            sourceProcessor,
+            targetProcessor,
+            sourceType,
+            targetType,
+            sourceQuantity,
+            equivalenceResult.targetQuantity
+        );
+        
+        // Scroll to results with enough space to avoid overlapping
+        document.getElementById('quantity-results').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'  // Ensures it scrolls to the top of the element
+        });
+        
+        // Add spacing to prevent overlap with next section
+        const spacer = document.createElement('div');
+        spacer.style.height = '100px';
+        spacer.className = 'quantity-results-spacer';
+        
+        // Remove any existing spacers first
+        const existingSpacers = document.querySelectorAll('.quantity-results-spacer');
+        existingSpacers.forEach(s => s.remove());
+        
+        // Add the new spacer
+        document.getElementById('quantity-results').appendChild(spacer);
     };
     
     const calculateEquivalence = function(sourceProcessor, targetProcessor, sourceType, targetType, workloadFactor, sourceQuantity) {
@@ -2063,95 +2211,49 @@ const UIModule = (function() {
         const totalSourcePerformance = sourcePerformanceValue * sourceQuantity;
         const totalTargetPerformance = targetPerformanceValue * targetQuantity;
         
-        // Create summary
+        // Create improved summary with better formatting
         quantitySummary.innerHTML = `
             <p class="mb-4">For a <strong>${workloadName}</strong> workload (${workloadFactor} tpm/MIPS):</p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div class="border rounded-lg p-4 bg-white">
-                    <h4 class="font-semibold text-lg mb-2">${sourceProcessor.name}</h4>
+                <div class="border rounded-lg p-4 bg-white shadow-md">
+                    <h4 class="font-semibold text-lg mb-2 ${sourceType}-text">${sourceProcessor.name}</h4>
                     <p><strong>Quantity:</strong> ${sourceQuantity}</p>
-                    <p><strong>${sourcePerformanceMetric} per Unit:</strong> ${sourcePerformanceValue}</p>
-                    <p><strong>Total ${sourcePerformanceMetric}:</strong> ${totalSourcePerformance}</p>
+                    <p><strong>${sourcePerformanceMetric} per Unit:</strong> ${sourcePerformanceValue.toLocaleString()}</p>
+                    <p><strong>Total ${sourcePerformanceMetric}:</strong> ${totalSourcePerformance.toLocaleString()}</p>
                     <p><strong>Cores per Unit:</strong> ${sourceProcessor.cores}</p>
                     <p><strong>Total Cores:</strong> ${sourceProcessor.cores * sourceQuantity}</p>
                     ${sourceType !== 'mainframe' ? `<p><strong>Total Threads:</strong> ${sourceProcessor.threads * sourceQuantity}</p>` : ''}
+                    <p><strong>Architecture:</strong> ${sourceType === 'mainframe' ? 'IBM Mainframe' : sourceProcessor.architecture}</p>
                 </div>
                 
-                <div class="border rounded-lg p-4 bg-white">
-                    <h4 class="font-semibold text-lg mb-2">${targetProcessor.name}</h4>
+                <div class="border rounded-lg p-4 bg-white shadow-md">
+                    <h4 class="font-semibold text-lg mb-2 ${targetType}-text">${targetProcessor.name}</h4>
                     <p><strong>Quantity:</strong> ${targetQuantity}</p>
-                    <p><strong>${targetPerformanceMetric} per Unit:</strong> ${targetPerformanceValue}</p>
-                    <p><strong>Total ${targetPerformanceMetric}:</strong> ${totalTargetPerformance}</p>
+                    <p><strong>${targetPerformanceMetric} per Unit:</strong> ${targetPerformanceValue.toLocaleString()}</p>
+                    <p><strong>Total ${targetPerformanceMetric}:</strong> ${totalTargetPerformance.toLocaleString()}</p>
                     <p><strong>Cores per Unit:</strong> ${targetProcessor.cores}</p>
                     <p><strong>Total Cores:</strong> ${targetProcessor.cores * targetQuantity}</p>
                     ${targetType !== 'mainframe' ? `<p><strong>Total Threads:</strong> ${targetProcessor.threads * targetQuantity}</p>` : ''}
+                    <p><strong>Architecture:</strong> ${targetType === 'mainframe' ? 'IBM Mainframe' : targetProcessor.architecture}</p>
                 </div>
             </div>
             
-            <p class="text-xl font-semibold text-center p-4 bg-blue-50 rounded">
+            <div class="text-xl font-semibold text-center p-4 bg-blue-50 rounded shadow-md">
                 ${sourceQuantity}x ${sourceProcessor.name} ≈ ${targetQuantity}x ${targetProcessor.name}
-            </p>
+            </div>
             
             <p class="text-sm text-gray-600 mt-4">
                 This equivalence is based on the selected workload profile and relative performance metrics between the two processor types.
                 ${(sourceType === 'mainframe' && targetType !== 'mainframe') || (sourceType !== 'mainframe' && targetType === 'mainframe') ? 
                 ' Cross-platform comparisons use workload factor adjustments to normalize performance metrics.' : ''}
             </p>
+            
+            <p class="text-sm text-gray-600 mt-4">
+                <strong>Note:</strong> These calculations are approximations and actual performance may vary based on specific application characteristics,
+                operating system configurations, and other environmental factors.
+            </p>
         `;
-        
-        // Create visualization of the equivalence
-        const quantityChartCtx = document.getElementById('quantity-result-chart').getContext('2d');
-        
-        // Prepare colors based on processor types
-        const sourceColor = sourceType === 'power' ? 'rgba(15, 98, 254, 1)' : sourceType === 'intel' ? 'rgba(0, 113, 197, 1)' : 'rgba(102, 51, 153, 1)';
-        const targetColor = targetType === 'power' ? 'rgba(15, 98, 254, 1)' : targetType === 'intel' ? 'rgba(0, 113, 197, 1)' : 'rgba(102, 51, 153, 1)';
-        
-        // Destroy existing chart if it exists
-        if (window.quantityResultChart) {
-            window.quantityResultChart.destroy();
-        }
-        
-        // Create new chart
-        window.quantityResultChart = new Chart(quantityChartCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Processor Quantity', 'Total Cores', 'Performance Score'],
-                datasets: [
-                    {
-                        label: sourceProcessor.name,
-                        backgroundColor: sourceColor,
-                        data: [
-                            sourceQuantity,
-                            sourceProcessor.cores * sourceQuantity,
-                            totalSourcePerformance
-                        ]
-                    },
-                    {
-                        label: targetProcessor.name,
-                        backgroundColor: targetColor,
-                        data: [
-                            targetQuantity,
-                            targetProcessor.cores * targetQuantity,
-                            totalTargetPerformance
-                        ]
-                    }
-                ]
-            },
-            options: {
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                },
-                title: {
-                    display: true,
-                    text: `Processor Quantity Equivalence (${workloadName} Workload)`
-                }
-            }
-        });
     };
     
     // Update migration results UI
