@@ -73,6 +73,8 @@ const ProcessorComparisonApp = (function() {
             }
             workloadData = await workloadResponse.json();            
 
+            UIModule.updateLoading('Hiding load...');
+            
             UIModule.hideLoading();
             console.log('Data loaded successfully:', { processorData, workloadData });
         } catch (error) {
