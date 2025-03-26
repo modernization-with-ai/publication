@@ -16,7 +16,6 @@ This tool provides a detailed comparison of different processor architectures, a
 - **processor-data.json**: JSON file containing processor specifications and performance data
 - **workload-data.json**: JSON file containing workload types, migration data, and architecture comparisons
 - **comparison-tool-script.js**: JavaScript file with the main functionality
-- **comparison-tool-script-part2.js**: Additional JavaScript functionality
 - **README.md**: This documentation file
 
 ## Setup Instructions
