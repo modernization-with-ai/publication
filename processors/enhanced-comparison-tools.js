@@ -60,7 +60,9 @@ const ProcessorComparisonApp = (function() {
             
             // Hide loading indicator
             UIModule.hideLoading();
-            
+
+            // Wait for charts to be fully loaded
+            setTimeout(enhanceAllCharts, 1000);
             console.log('Processor Comparison Tool initialized successfully.');
         } catch (error) {
             console.error('Error initializing the application:', error);
@@ -2254,6 +2256,20 @@ const UIModule = (function() {
                 operating system configurations, and other environmental factors.
             </p>
         `;
+        // Get workload info
+        const workload = DataModule.getWorkloadByType(workloadType);
+        const workloadName = workload ? workload.name : 'Unknown';
+        
+        // Create the enhanced chart
+        createEnhancedQuantityChart(
+            sourceProcessor,
+            targetProcessor,
+            sourceType,
+            targetType,
+            sourceQuantity,
+            targetQuantity,
+            workloadName
+        );
     };
     
     // Update migration results UI
@@ -2684,6 +2700,161 @@ const DataModule = (function() {
         getWorkloadByType
     };
 })();
+const createEnhancedQuantityChart = function(sourceProcessor, targetProcessor, sourceType, targetType, sourceQuantity, targetQuantity, workloadName) {
+    const quantityChartCtx = document.getElementById('quantity-result-chart').getContext('2d');
+    
+    // Prepare colors based on processor types
+    const sourceColor = sourceType === 'power' ? 'rgba(15, 98, 254, 0.8)' : sourceType === 'intel' ? 'rgba(0, 113, 197, 0.8)' : 'rgba(102, 51, 153, 0.8)';
+    const targetColor = targetType === 'power' ? 'rgba(15, 98, 254, 0.8)' : targetType === 'intel' ? 'rgba(0, 113, 197, 0.8)' : 'rgba(102, 51, 153, 0.8)';
+    
+    // Destroy existing chart if it exists
+    if (window.quantityResultChart) {
+        window.quantityResultChart.destroy();
+    }
+    
+    // Get performance metrics based on processor type
+    let sourcePerformance, targetPerformance, performanceLabel;
+    
+    if (sourceType === 'mainframe' && targetType === 'mainframe') {
+        // Both are mainframe - use MIPS
+        sourcePerformance = sourceProcessor.mips * sourceQuantity;
+        targetPerformance = targetProcessor.mips * targetQuantity;
+        performanceLabel = 'Total MIPS';
+    } else if (sourceType === 'mainframe') {
+        // Source is mainframe, target is not
+        sourcePerformance = sourceProcessor.mips * sourceQuantity;
+        targetPerformance = targetProcessor.multiThreadScore * targetQuantity;
+        performanceLabel = 'Performance Score (MIPS / Multi-Thread)';
+    } else if (targetType === 'mainframe') {
+        // Target is mainframe, source is not
+        sourcePerformance = sourceProcessor.multiThreadScore * sourceQuantity;
+        targetPerformance = targetProcessor.mips * targetQuantity;
+        performanceLabel = 'Performance Score (Multi-Thread / MIPS)';
+    } else {
+        // Neither is mainframe
+        sourcePerformance = sourceProcessor.multiThreadScore * sourceQuantity;
+        targetPerformance = targetProcessor.multiThreadScore * targetQuantity;
+        performanceLabel = 'Multi-Thread Score';
+    }
+    
+    // Create datasets for the chart with appropriate labels
+    const datasets = [
+        {
+            label: `${sourceProcessor.name} (${sourceQuantity}x)`,
+            backgroundColor: sourceColor,
+            borderColor: sourceColor.replace('0.8', '1'),
+            borderWidth: 1,
+            data: [sourceQuantity, sourceProcessor.cores * sourceQuantity, sourcePerformance]
+        },
+        {
+            label: `${targetProcessor.name} (${targetQuantity}x)`,
+            backgroundColor: targetColor,
+            borderColor: targetColor.replace('0.8', '1'),
+            borderWidth: 1,
+            data: [targetQuantity, targetProcessor.cores * targetQuantity, targetPerformance]
+        }
+    ];
+    
+    // Create new chart with proper scale handling
+    window.quantityResultChart = new Chart(quantityChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Processor Quantity', 'Total Cores', performanceLabel],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            title: {
+                display: true,
+                text: `Processor Quantity Equivalence (${workloadName} Workload)`,
+                fontSize: 16,
+                padding: 20
+            },
+            legend: {
+                position: 'top',
+                labels: {
+                    boxWidth: 12,
+                    padding: 20
+                }
+            },
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        const label = data.datasets[tooltipItem.datasetIndex].label || '';
+                        let value = tooltipItem.yLabel;
+                        
+                        // Format large numbers with commas
+                        if (value >= 1000) {
+                            return `${label}: ${value.toLocaleString()}`;
+                        }
+                        return `${label}: ${value}`;
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: true,
+                        color: "rgba(0, 0, 0, 0.05)"
+                    }
+                }],
+                yAxes: [{
+                    type: 'logarithmic', // Use logarithmic scale for better visualization
+                    gridLines: {
+                        display: true,
+                        color: "rgba(0, 0, 0, 0.05)"
+                    },
+                    ticks: {
+                        callback: function(value, index, values) {
+                            if (value === 0) return '0';
+                            if (value === 1) return '1';
+                            if (value === 10) return '10';
+                            if (value === 100) return '100';
+                            if (value === 1000) return '1,000';
+                            if (value === 10000) return '10,000';
+                            if (value === 100000) return '100,000';
+                            return '';
+                        }
+                    }
+                }]
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+    
+    // Set chart container height
+    const chartContainer = document.querySelector('#quantity-results .chart-container');
+    if (chartContainer) {
+        chartContainer.style.height = '500px';
+    }
+};
+
+// Add this function to the UIModule to update the appearance of all charts
+const enhanceAllCharts = function() {
+    // Apply global chart defaults
+    Chart.defaults.global.defaultFontFamily = "'Arial', 'Helvetica', 'sans-serif'";
+    Chart.defaults.global.defaultFontSize = 12;
+    Chart.defaults.global.defaultFontColor = '#666';
+    
+    // Add responsive padding to all chart containers
+    document.querySelectorAll('.chart-container').forEach(container => {
+        container.style.padding = '20px';
+        container.style.marginBottom = '40px';
+        container.style.backgroundColor = '#f8fafc';
+        container.style.borderRadius = '8px';
+        container.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)';
+    });
+    
+    // Fix z-index issues to prevent overlapping
+    document.querySelectorAll('section').forEach((section, index) => {
+        section.style.position = 'relative';
+        section.style.zIndex = 10 - index; // Higher sections get higher z-index
+    });
+};
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', ProcessorComparisonApp.init);
